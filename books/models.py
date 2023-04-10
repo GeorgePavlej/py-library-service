@@ -10,11 +10,12 @@ class Book(models.Model):
 
     title = models.CharField(max_length=255)
     author = models.CharField(max_length=255)
-    cover = models.CharField(
-        max_length=9, choices=CoverType.choices)
+    cover = models.CharField(max_length=9, choices=CoverType.choices)
     inventory = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     daily_fee = models.DecimalField(
-        max_digits=5, decimal_places=2, default=Decimal("0.00")
+        max_digits=5,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.00"))],
     )
 
     def __str__(self):
