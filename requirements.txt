@@ -21,3 +21,5 @@ six==1.16.0
 sqlparse==0.4.3
 tomli==2.0.1
 yarl==1.8.2
+drf-spectacular==0.22.1
+
