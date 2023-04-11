@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_spectacular",
     "books",
+    "user",
 ]
 
 MIDDLEWARE = [
@@ -69,6 +70,9 @@ TEMPLATES = [
         },
     },
 ]
+
+AUTH_USER_MODEL = "user.User"
+
 
 WSGI_APPLICATION = "library_service.wsgi.application"
 
