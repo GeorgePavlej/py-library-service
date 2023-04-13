@@ -3,6 +3,8 @@ import datetime
 from django.core.validators import MinValueValidator
 from django.db import models
 
+from borrowings.utils import send_new_borrowing_notification
+
 
 class Borrowing(models.Model):
     user = models.ForeignKey("user.User", on_delete=models.CASCADE)
@@ -27,6 +29,7 @@ class Borrowing(models.Model):
         book.save()
         borrowing = cls(user=user, book=book, borrow_date=borrow_date, expected_return_date=expected_return_date)
         borrowing.save()
+        send_new_borrowing_notification(borrowing)
         return borrowing
 
     def return_borrowing(self):
