@@ -1,23 +1,29 @@
-import requests
+from datetime import date
+
 from django.conf import settings
-from requests import Response
+from django.db.models import Q
+
+from borrowings.models import Borrowing
+from borrowings.signals import send_telegram_message
 
 
-def send_telegram_message(chat_id: int, message: str) -> Response:
-    bot_token = settings.BOT_TOKEN
-    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    payload = {"chat_id": chat_id, "text": message}
-    response = requests.post(url, data=payload)
-    return response
-
-
-def send_new_borrowing_notification(borrowing):
-    chat_id = settings.CHAT_ID
-    message = (
-        f"New borrowing:\n"
-        f"User: {borrowing.user}\n"
-        f"Book: {borrowing.book}\n"
-        f"Borrow Date: {borrowing.borrow_date}\n"
-        f"Expected Return Date: {borrowing.expected_return_date}"
+def check_overdue_borrowings():
+    overdue_borrowings = Borrowing.objects.filter(
+        Q(expected_return_date__lte=date.today()) &
+        Q(actual_return_date__isnull=True)
     )
-    send_telegram_message(chat_id, message)
+
+    if not overdue_borrowings.exists():
+        message = "No borrowings overdue today!"
+        send_telegram_message(chat_id=settings.CHAT_ID, message=message)
+        return
+
+    for borrowing in overdue_borrowings:
+        message = (
+            f"Overdue borrowing:\n"
+            f"User: {borrowing.user}\n"
+            f"Book: {borrowing.book}\n"
+            f"Borrow Date: {borrowing.borrow_date}\n"
+            f"Expected Return Date: {borrowing.expected_return_date}"
+        )
+        send_telegram_message(chat_id=settings.CHAT_ID, message=message)
