@@ -157,3 +157,15 @@ SPECTACULAR_SETTINGS = {
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
+
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
+CELERY_TIMEZONE = "Europe/London"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_BEAT_SCHEDULE = {
+    "check_overdue_borrowings_every_minute": {
+        "task": "borrowings.tasks.check_overdue_borrowings_task",
+        "schedule": timedelta(days=1),
+    },
+}
