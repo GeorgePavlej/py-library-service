@@ -2,8 +2,7 @@ import datetime
 
 from django.core.validators import MinValueValidator
 from django.db import models
-
-from borrowings.utils import send_new_borrowing_notification
+from rest_framework.exceptions import ValidationError
 
 
 class Borrowing(models.Model):
@@ -24,12 +23,11 @@ class Borrowing(models.Model):
     @classmethod
     def create_borrowing(cls, user, book, borrow_date, expected_return_date):
         if book.inventory == 0:
-            raise ValueError("This book is out of stock.")
+            raise ValidationError("This book is out of stock.")
         book.inventory -= 1
         book.save()
         borrowing = cls(user=user, book=book, borrow_date=borrow_date, expected_return_date=expected_return_date)
         borrowing.save()
-        send_new_borrowing_notification(borrowing)
         return borrowing
 
     def return_borrowing(self):
