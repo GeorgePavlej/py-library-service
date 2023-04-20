@@ -1,6 +1,6 @@
 import requests
 from django.conf import settings
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from requests import Response
 
@@ -31,3 +31,18 @@ def send_new_borrowing_notification(instance, created=True) -> None:
             f"Expected Return Date: {instance.expected_return_date}"
         )
         send_telegram_message(chat_id, message)
+
+
+@receiver(post_save, sender=Borrowing)
+def update_inventory_on_borrowing_create(sender, instance, created, **kwargs):
+    if created:
+        book = instance.book
+        book.inventory -= 1
+        book.save()
+
+
+@receiver(post_delete, sender=Borrowing)
+def update_inventory_on_borrowing_delete(sender, instance, **kwargs):
+    book = instance.book
+    book.inventory += 1
+    book.save()
