@@ -15,18 +15,19 @@ class Borrowing(models.Model):
         validators=[MinValueValidator(datetime.date.today())]
     )
     actual_return_date = models.DateField(
-        null=True, blank=True, validators=[
-            MinValueValidator(datetime.date.today())
-        ]
+        null=True, blank=True, validators=[MinValueValidator(datetime.date.today())]
     )
 
     @classmethod
     def create_borrowing(cls, user, book, borrow_date, expected_return_date):
         if book.inventory == 0:
             raise ValidationError("This book is out of stock.")
-        book.inventory -= 1
-        book.save()
-        borrowing = cls(user=user, book=book, borrow_date=borrow_date, expected_return_date=expected_return_date)
+        borrowing = cls(
+            user=user,
+            book=book,
+            borrow_date=borrow_date,
+            expected_return_date=expected_return_date,
+        )
         borrowing.save()
         return borrowing
 
@@ -35,8 +36,6 @@ class Borrowing(models.Model):
             raise ValueError("Borrowing has already been returned.")
         else:
             self.actual_return_date = datetime.date.today()
-            self.book.inventory += 1
-            self.book.save()
             self.save()
 
     def __str__(self) -> str:
