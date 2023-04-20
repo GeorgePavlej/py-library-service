@@ -23,7 +23,7 @@ class BookViewSet(viewsets.ModelViewSet):
     @extend_schema(
         parameters=[
             OpenApiParameter(
-                name="name",
+                name="title",
                 description="Filter by books title",
                 required=False,
                 type=str,
