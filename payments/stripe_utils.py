@@ -4,7 +4,8 @@ from django.conf import settings
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
-def create_stripe_session(amount):
+def create_stripe_session(borrowing):
+    total_price = borrowing.get_total_borrowing_price()
     session = stripe.checkout.Session.create(
         payment_method_types=["card"],
         line_items=[
@@ -14,7 +15,7 @@ def create_stripe_session(amount):
                     "product_data": {
                         "name": "Library Payment",
                     },
-                    "unit_amount": int(amount * 100),
+                    "unit_amount": int(total_price * 100),
                 },
                 "quantity": 1,
             }
