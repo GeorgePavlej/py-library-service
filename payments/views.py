@@ -4,6 +4,7 @@ from django.http import HttpResponse
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
+from borrowings.models import Borrowing
 from .models import Payment
 from .serializers import PaymentSerializer
 from .permissions import IsAdminOrOwner
@@ -18,9 +19,10 @@ class PaymentList(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
+        borrowing_id = serializer.validated_data["borrowing"].id
+        borrowing = Borrowing.objects.get(id=borrowing_id)
+        session = create_stripe_session(borrowing)
         amount = serializer.validated_data["amount"]
-        session = create_stripe_session(amount)
         serializer.validated_data["session_url"] = session.url
         serializer.validated_data["session_id"] = session.id
 
