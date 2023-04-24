@@ -18,6 +18,11 @@ class Borrowing(models.Model):
         null=True, blank=True, validators=[MinValueValidator(datetime.date.today())]
     )
 
+    def get_total_borrowing_price(self):
+        daily_fee = self.book.daily_fee
+        borrowing_duration = (self.expected_return_date - self.borrow_date).days
+        return daily_fee * borrowing_duration
+
     @classmethod
     def create_borrowing(cls, user, book, borrow_date, expected_return_date):
         if book.inventory == 0:
