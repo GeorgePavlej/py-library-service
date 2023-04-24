@@ -25,7 +25,7 @@ class Payment(models.Model):
         "borrowings.Borrowing",
         on_delete=models.CASCADE
     )
-    session_url = models.URLField()
+    session_url = models.URLField(blank=True, null=True)
     session_id = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
 
