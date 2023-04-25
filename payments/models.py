@@ -23,7 +23,8 @@ class Payment(models.Model):
     )
     borrowing = models.ForeignKey(
         "borrowings.Borrowing",
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name="payments",
     )
     session_url = models.URLField(blank=True, null=True)
     session_id = models.CharField(max_length=100)
