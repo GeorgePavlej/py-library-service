@@ -1,11 +1,15 @@
 import stripe
 from django.conf import settings
+from django.core.exceptions import ValidationError
+
+from payments.models import Payment
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
-def create_stripe_session(borrowing):
-    total_price = borrowing.get_total_borrowing_price()
+def create_stripe_session(amount):
+    if amount <= 0:
+        raise ValidationError("Total amount due should be greater than zero")
     session = stripe.checkout.Session.create(
         payment_method_types=["card"],
         line_items=[
@@ -15,7 +19,7 @@ def create_stripe_session(borrowing):
                     "product_data": {
                         "name": "Library Payment",
                     },
-                    "unit_amount": int(total_price * 100),
+                    "unit_amount": int(amount * 100),
                 },
                 "quantity": 1,
             }
@@ -26,3 +30,21 @@ def create_stripe_session(borrowing):
     )
 
     return session
+
+
+def create_stripe_payment(borrowing):
+    total_price = borrowing.get_total_borrowing_price()
+
+    try:
+        session = create_stripe_session(total_price)
+    except ValueError as e:
+        raise ValidationError("Invalid total price: {}".format(e))
+
+    payment = Payment.objects.create(
+        borrowing=borrowing,
+        session_url=session.url,
+        session_id=session.id,
+        amount=total_price,
+    )
+
+    return payment
