@@ -1,8 +1,10 @@
 import datetime
 
 from django.core.validators import MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from rest_framework.exceptions import ValidationError
+
+from payments.stripe_utils import create_stripe_payment
 
 
 class Borrowing(models.Model):
@@ -27,13 +29,22 @@ class Borrowing(models.Model):
     def create_borrowing(cls, user, book, borrow_date, expected_return_date):
         if book.inventory == 0:
             raise ValidationError("This book is out of stock.")
+
         borrowing = cls(
             user=user,
             book=book,
             borrow_date=borrow_date,
             expected_return_date=expected_return_date,
         )
-        borrowing.save()
+
+        total_amount_due = borrowing.get_total_borrowing_price()
+
+        if total_amount_due <= 0:
+            raise ValidationError("Invalid total price: Total amount due should be greater than zero")
+
+        with transaction.atomic():
+            borrowing.save()
+            payment = create_stripe_payment(borrowing)
         return borrowing
 
     def return_borrowing(self):
