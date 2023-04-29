@@ -2,9 +2,9 @@ from typing import Any
 
 from django.http import HttpResponse
 from rest_framework import (
-    generics,
     permissions,
-    status
+    status,
+    viewsets
 )
 from rest_framework.response import Response
 
@@ -14,10 +14,10 @@ from .permissions import IsAdminOrOwner
 from .stripe_utils import create_stripe_session
 
 
-class PaymentList(generics.ListCreateAPIView):
+class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.IsAuthenticated, IsAdminOrOwner,)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -45,12 +45,6 @@ class PaymentList(generics.ListCreateAPIView):
         if user.is_staff:
             return Payment.objects.all()
         return Payment.objects.filter(borrowing__user=user)
-
-
-class PaymentDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Payment.objects.all()
-    serializer_class = PaymentSerializer
-    permission_classes = (IsAdminOrOwner,)
 
 
 def stripe_success(request):
