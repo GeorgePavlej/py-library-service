@@ -1,5 +1,6 @@
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-from rest_framework import generics, views, status
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -8,10 +9,37 @@ from .models import Borrowing
 from .serializers import BorrowingReadSerializer, BorrowingCreateSerializer
 
 
-class BorrowingList(generics.ListCreateAPIView):
-    serializer_class = BorrowingReadSerializer
+class BorrowingViewSet(viewsets.ModelViewSet):
+    queryset = Borrowing.objects.all()
     authentication_classes = (JWTAuthentication,)
     permission_classes = (IsAuthenticated,)
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return BorrowingCreateSerializer
+        return BorrowingReadSerializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="is_active",
+                type=str,
+                enum=["true", "false"],
+                description="Filter by active borrowings (ex. ?is_active=true)",
+                location=OpenApiParameter.QUERY,
+            ),
+            OpenApiParameter(
+                name="user_id",
+                type=int,
+                description=(
+                    "Filter by user id (for admin users only, ex. ?user_id=2)"
+                ),
+                location=OpenApiParameter.QUERY,
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
         user = self.request.user
@@ -23,50 +51,17 @@ class BorrowingList(generics.ListCreateAPIView):
             queryset = queryset.filter(user_id=user_id)
 
         if is_active is not None:
-            is_active = is_active.lower() == "true"
-            queryset = queryset.filter(actual_return_date__isnull=is_active)
+            if is_active.lower() == "true":
+                queryset = queryset.filter(actual_return_date__isnull=True)
+            elif is_active.lower() == "false":
+                queryset = queryset.filter(actual_return_date__isnull=False)
 
         if not user.is_staff:
             queryset = queryset.filter(user=user)
 
         return queryset
 
-    def get_serializer_class(self):
-        if self.request.method == "POST":
-            return BorrowingCreateSerializer
-        return BorrowingReadSerializer
-
-    @extend_schema(
-        parameters=[
-            OpenApiParameter(
-                name="is_active",
-                type=bool,
-                description="Filter by active borrowings (ex. ?is_active=true)",
-                location=OpenApiParameter.QUERY,
-            ),
-            OpenApiParameter(
-                name="user_id",
-                type=int,
-                description=(
-                        "Filter by user id (for admin users only, ex. ?user_id=2)"
-                ),
-                location=OpenApiParameter.QUERY,
-            ),
-        ]
-    )
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
-
-
-class BorrowingDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Borrowing.objects.all()
-    serializer_class = BorrowingReadSerializer
-    permission_classes = (IsAuthenticated,)
-
-
-class BorrowingReturn(views.APIView):
-    permission_classes = (IsAuthenticated,)
-
+    @action(detail=True, methods=["post"])
     @extend_schema(
         request=None,
         responses={
@@ -91,7 +86,7 @@ class BorrowingReturn(views.APIView):
             },
         },
     )
-    def post(self, request, *args, **kwargs):
+    def return_borrowing(self, request, *args, **kwargs):
         try:
             borrowing = Borrowing.objects.get(pk=kwargs["pk"])
             borrowing.return_borrowing()
