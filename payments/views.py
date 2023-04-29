@@ -2,9 +2,9 @@ from typing import Any
 
 from django.http import HttpResponse
 from rest_framework import (
-    generics,
     permissions,
-    status, viewsets
+    status,
+    viewsets
 )
 from rest_framework.response import Response
 
