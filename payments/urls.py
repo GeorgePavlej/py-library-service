@@ -1,11 +1,18 @@
 from django.urls import path
-from . import views
+from rest_framework.routers import DefaultRouter
+
+from .views import (
+    stripe_success,
+    stripe_cancel,
+    PaymentViewSet
+)
 
 app_name = "payments"
 
+router = DefaultRouter()
+router.register("", PaymentViewSet)
+
 urlpatterns = [
-    path("", views.PaymentList.as_view(), name="payment-list"),
-    path("<int:pk>/", views.PaymentDetail.as_view(), name="payment-detail"),
-    path("success/", views.stripe_success, name="stripe-success"),
-    path("cancel/", views.stripe_cancel, name="stripe-cancel"),
-]
+    path("success/", stripe_success, name="stripe-success"),
+    path("cancel/", stripe_cancel, name="stripe-cancel"),
+] + router.urls
