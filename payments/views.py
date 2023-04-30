@@ -1,6 +1,7 @@
 from typing import Any
 
 from django.http import HttpResponse
+from django.urls import reverse
 from rest_framework import (
     permissions,
     status,
@@ -30,7 +31,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        session = create_stripe_session(amount)
+        success_url = request.build_absolute_uri(reverse("payments:success"))
+        cancel_url = request.build_absolute_uri(reverse("payments:cancel"))
+
+        session = create_stripe_session(amount, success_url, cancel_url)
         serializer.validated_data["session_url"] = session.url
         serializer.validated_data["session_id"] = session.id
 
