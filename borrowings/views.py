@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from payments.models import Payment
 from .models import Borrowing
 from .serializers import BorrowingReadSerializer, BorrowingCreateSerializer
 
@@ -89,7 +90,9 @@ class BorrowingViewSet(viewsets.ModelViewSet):
     def return_borrowing(self, request, *args, **kwargs):
         try:
             borrowing = Borrowing.objects.get(pk=kwargs["pk"])
-            borrowing.return_borrowing()
+            payment_status = borrowing.payments.first().status
+            is_payment_paid = payment_status == Payment.PaymentStatus.PAID
+            borrowing.return_borrowing(is_payment_paid)
             return Response(status=status.HTTP_204_NO_CONTENT)
         except ValueError as error:
             return Response({"detail": str(error)}, status=status.HTTP_400_BAD_REQUEST)
