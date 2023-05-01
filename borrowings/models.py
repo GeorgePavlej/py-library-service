@@ -26,7 +26,7 @@ class Borrowing(models.Model):
         return daily_fee * borrowing_duration
 
     @classmethod
-    def create_borrowing(cls, user, book, borrow_date, expected_return_date):
+    def create_borrowing(cls, request, user, book, borrow_date, expected_return_date):
         if book.inventory == 0:
             raise ValidationError("This book is out of stock.")
 
@@ -44,12 +44,14 @@ class Borrowing(models.Model):
 
         with transaction.atomic():
             borrowing.save()
-            payment = create_stripe_payment(borrowing)
+            payment = create_stripe_payment(request, borrowing)
         return borrowing
 
-    def return_borrowing(self):
+    def return_borrowing(self, is_payment_paid):
         if self.actual_return_date:
             raise ValueError("Borrowing has already been returned.")
+        elif not is_payment_paid:
+            raise ValueError("Payment is not completed.")
         else:
             self.actual_return_date = datetime.date.today()
             self.save()
