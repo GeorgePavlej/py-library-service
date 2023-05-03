@@ -1,6 +1,10 @@
 from typing import Any
 
+import stripe
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.urls import reverse
+
 from rest_framework import (
     permissions,
     status,
@@ -17,10 +21,15 @@ from .stripe_utils import create_stripe_session
 class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
-    permission_classes = (permissions.IsAuthenticated, IsAdminOrOwner,)
+    permission_classes = (
+        permissions.IsAuthenticated,
+        IsAdminOrOwner,
+    )
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(
+            data=request.data, context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
         amount = serializer.validated_data["amount"]
 
@@ -30,7 +39,10 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        session = create_stripe_session(amount)
+        success_url = request.build_absolute_uri(reverse("payments:success"))
+        cancel_url = request.build_absolute_uri(reverse("payments:cancel"))
+
+        session = create_stripe_session(amount, success_url, cancel_url)
         serializer.validated_data["session_url"] = session.url
         serializer.validated_data["session_id"] = session.id
 
@@ -48,8 +60,20 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
 
 def stripe_success(request):
-    return HttpResponse("Payment successful. Thank you for your payment!")
+    session_id = request.GET.get("session_id")
+    payment = get_object_or_404(Payment, session_id=session_id)
+
+    session = stripe.checkout.Session.retrieve(session_id)
+    if session.payment_status == "paid":
+        payment.status = Payment.PaymentStatus.PAID
+        payment.save()
+        return HttpResponse("Payment successful. Thank you for your payment!")
+    else:
+        return HttpResponse("Payment not successful. Please try again.")
 
 
 def stripe_cancel(request):
-    return HttpResponse("Payment canceled. Please try again later.")
+    return HttpResponse(
+        "Payment canceled. Please try again later. "
+        "Note that the payment session is only available for 24 hours."
+    )
