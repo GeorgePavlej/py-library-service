@@ -34,7 +34,10 @@ def create_stripe_session(amount, success_url, cancel_url):
 
 def create_stripe_payment(request, borrowing):
     total_price = borrowing.get_total_borrowing_price()
-    success_url = request.build_absolute_uri(reverse("payments:success"))
+    success_url = (
+        request.build_absolute_uri(reverse("payments:success"))
+        + "?session_id={CHECKOUT_SESSION_ID}"
+    )
     cancel_url = request.build_absolute_uri(reverse("payments:cancel"))
     try:
         session = create_stripe_session(total_price, success_url, cancel_url)
@@ -48,4 +51,3 @@ def create_stripe_payment(request, borrowing):
         amount=total_price,
     )
     return payment
-
