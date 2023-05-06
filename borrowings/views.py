@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -104,5 +105,9 @@ class BorrowingViewSet(viewsets.ModelViewSet):
                 )
             else:
                 return Response(status=status.HTTP_204_NO_CONTENT)
+        except ObjectDoesNotExist:
+            return Response(
+                {"detail": "Borrowing not found."}, status=status.HTTP_404_NOT_FOUND
+            )
         except ValueError as error:
             return Response({"detail": str(error)}, status=status.HTTP_400_BAD_REQUEST)
