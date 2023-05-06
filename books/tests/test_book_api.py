@@ -65,7 +65,7 @@ class AuthenticatedBookApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
 
-class AdminBusApiTests(TestCase):
+class AdminBookApiTests(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
