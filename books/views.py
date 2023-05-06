@@ -17,7 +17,7 @@ class BookViewSet(viewsets.ModelViewSet):
         queryset = Book.objects.all()
         title = self.request.query_params.get("title")
         if title is not None:
-            queryset = queryset.filter(name__icontains=title)
+            queryset = queryset.filter(title__icontains=title)
         return queryset
 
     @extend_schema(
