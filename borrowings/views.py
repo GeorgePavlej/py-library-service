@@ -1,9 +1,14 @@
+from typing import Type
+
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import QuerySet
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.serializers import Serializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from payments.models import Payment
@@ -16,7 +21,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
     authentication_classes = (JWTAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    def get_serializer_class(self):
+    def get_serializer_class(self) -> Type[Serializer]:
         if self.request.method == "POST":
             return BorrowingCreateSerializer
         return BorrowingReadSerializer
@@ -40,10 +45,10 @@ class BorrowingViewSet(viewsets.ModelViewSet):
             ),
         ]
     )
-    def list(self, request, *args, **kwargs):
+    def list(self, request: Request, *args, **kwargs) -> Response:
         return super().list(request, *args, **kwargs)
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Borrowing]:
         user = self.request.user
         user_id = self.request.query_params.get("user_id", None)
         is_active = self.request.query_params.get("is_active", None)
@@ -88,7 +93,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
             },
         },
     )
-    def return_borrowing(self, request, *args, **kwargs):
+    def return_borrowing(self, request: Request, *args, **kwargs) -> Response:
         try:
             borrowing = Borrowing.objects.get(pk=kwargs["pk"])
             payment_status = borrowing.payments.first().status

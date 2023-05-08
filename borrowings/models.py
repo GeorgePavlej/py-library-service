@@ -26,7 +26,7 @@ class Borrowing(models.Model):
         null=True, blank=True, validators=[MinValueValidator(datetime.date.today())]
     )
 
-    def get_total_borrowing_price(self):
+    def get_total_borrowing_price(self) -> float:
         daily_fee = self.book.daily_fee
         borrowing_duration = (self.expected_return_date - self.borrow_date).days
         return daily_fee * borrowing_duration
@@ -55,7 +55,8 @@ class Borrowing(models.Model):
             payment = create_stripe_payment(request, borrowing)
         return borrowing
 
-    def return_borrowing(self, is_payment_paid, request=None):
+    def return_borrowing(
+            self, is_payment_paid: bool, request=None) -> Payment | None:
         if self.actual_return_date:
             raise ValueError("Borrowing has already been returned.")
         elif not is_payment_paid:
