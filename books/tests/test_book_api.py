@@ -1,19 +1,14 @@
-import os
-
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-import django
 
 from books.models import Book
 from books.serializers import BookSerializer
 
-django.setup()
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "library_service.settings")
 BOOK_URL = reverse("books:book-list")
 
 
