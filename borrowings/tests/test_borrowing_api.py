@@ -1,7 +1,5 @@
-import os
 from datetime import date, timedelta
 
-import django
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -12,9 +10,7 @@ from borrowings.models import Borrowing
 from payments.models import Payment
 from user.models import User
 
-django.setup()
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "library_service.settings")
 BORROWING_URL = reverse("borrowings:borrowing-list")
 
 
