@@ -3,6 +3,7 @@ import datetime
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from library_service import settings
@@ -14,9 +15,11 @@ class Borrowing(models.Model):
     user = models.ForeignKey("user.User", on_delete=models.CASCADE)
     book = models.ForeignKey("books.Book", on_delete=models.CASCADE)
     borrow_date = models.DateField(
+        default=timezone.now,
         validators=[MinValueValidator(datetime.date.today())]
     )
     expected_return_date = models.DateField(
+        default=timezone.now,
         validators=[MinValueValidator(datetime.date.today())]
     )
     actual_return_date = models.DateField(
