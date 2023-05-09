@@ -4,7 +4,6 @@ from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from django.urls import reverse
 
-from borrowings.models import Borrowing
 from payments.models import Payment
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -34,7 +33,9 @@ def create_stripe_session(amount: int, success_url: str, cancel_url: str):
     return session
 
 
-def create_stripe_payment(request: HttpRequest, borrowing: Borrowing) -> Payment:
+def create_stripe_payment(
+        request: HttpRequest, borrowing
+) -> Payment:
     total_price = borrowing.get_total_borrowing_price()
     success_url = (
         request.build_absolute_uri(reverse("payments:success"))
