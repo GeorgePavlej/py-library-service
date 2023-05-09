@@ -10,7 +10,7 @@ from user.models import User
 
 
 class PaymentSerializerTestCase(APITestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.user = User.objects.create_user(
             email="test@example.com",
             password="testpassword"
@@ -25,7 +25,7 @@ class PaymentSerializerTestCase(APITestCase):
             amount=10.00
         )
 
-    def test_payment_serialization(self):
+    def test_payment_serialization(self) -> None:
         serializer = PaymentSerializer(self.payment)
         expected_data = {
             "id": self.payment.id,
@@ -40,7 +40,7 @@ class PaymentSerializerTestCase(APITestCase):
 
 
 class PaymentViewSetTestCase(APITestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.user = User.objects.create_user(
             email="test@example.com",
             password="testpassword"
@@ -53,13 +53,13 @@ class PaymentViewSetTestCase(APITestCase):
             amount=10.00
         )
 
-    def test_payment_list_view(self):
+    def test_payment_list_view(self) -> None:
         self.client.force_authenticate(user=self.user)
         response = self.client.get(reverse("payments:payment-list"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
-    def test_payment_retrieve_view(self):
+    def test_payment_retrieve_view(self) -> None:
         self.client.force_authenticate(user=self.user)
         response = self.client.get(
             reverse("payments:payment-detail", args=[self.payment.id])
