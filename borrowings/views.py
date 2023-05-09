@@ -98,7 +98,9 @@ class BorrowingViewSet(viewsets.ModelViewSet):
             borrowing = Borrowing.objects.get(pk=kwargs["pk"])
             payment_status = borrowing.payments.first().status
             is_payment_paid = payment_status == Payment.PaymentStatus.PAID
-            fine_payment = borrowing.return_borrowing(is_payment_paid, request=request)
+            fine_payment = borrowing.return_borrowing(
+                is_payment_paid, request=request
+            )
             if fine_payment:
                 return Response(
                     {
@@ -112,7 +114,11 @@ class BorrowingViewSet(viewsets.ModelViewSet):
                 return Response(status=status.HTTP_204_NO_CONTENT)
         except ObjectDoesNotExist:
             return Response(
-                {"detail": "Borrowing not found."}, status=status.HTTP_404_NOT_FOUND
+                {
+                    "detail": "Borrowing not found."
+                }, status=status.HTTP_404_NOT_FOUND
             )
         except ValueError as error:
-            return Response({"detail": str(error)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "detail": str(error)
+            }, status=status.HTTP_400_BAD_REQUEST)
