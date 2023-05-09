@@ -19,5 +19,5 @@ class Book(models.Model):
         validators=[MinValueValidator(Decimal("1.00"))],
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.title} by {self.author}"

@@ -36,14 +36,18 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
             "expected_return_date",
         )
 
-    def validate(self, data):
+    def validate(self, data: dict) -> dict:
         if data["expected_return_date"] <= data["borrow_date"]:
             raise serializers.ValidationError(
                 "Expected return date must be greater than the borrow date."
             )
         return data
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict) -> Borrowing:
         user = self.context["request"].user
         request = self.context["request"]
-        return Borrowing.create_borrowing(user=user, request=request, **validated_data)
+        return Borrowing.create_borrowing(
+            user=user,
+            request=request,
+            **validated_data
+        )

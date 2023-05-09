@@ -16,11 +16,15 @@ def send_telegram_message(chat_id: int, message: str) -> Response:
 
 
 @receiver(post_save, sender=Borrowing)
-def send_borrowing_notification(instance, created, **kwargs) -> None:
+def send_borrowing_notification(
+        instance: Borrowing, created: bool, **kwargs
+) -> None:
     send_new_borrowing_notification(instance, created)
 
 
-def send_new_borrowing_notification(instance, created=True) -> None:
+def send_new_borrowing_notification(
+        instance: Borrowing, created: bool = True
+) -> None:
     if created:
         chat_id = settings.CHAT_ID
         message = (
@@ -34,7 +38,9 @@ def send_new_borrowing_notification(instance, created=True) -> None:
 
 
 @receiver(post_save, sender=Borrowing)
-def update_inventory_on_borrowing_create(sender, instance, created, **kwargs):
+def update_inventory_on_borrowing_create(
+        sender, instance: Borrowing, created: bool, **kwargs
+) -> None:
     if created:
         book = instance.book
         book.inventory -= 1
@@ -42,7 +48,8 @@ def update_inventory_on_borrowing_create(sender, instance, created, **kwargs):
 
 
 @receiver(post_delete, sender=Borrowing)
-def update_inventory_on_borrowing_delete(sender, instance, **kwargs):
+def update_inventory_on_borrowing_delete(
+        sender, instance: Borrowing, **kwargs) -> None:
     book = instance.book
     book.inventory += 1
     book.save()

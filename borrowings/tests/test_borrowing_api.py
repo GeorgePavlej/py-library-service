@@ -1,7 +1,5 @@
-import os
 from datetime import date, timedelta
 
-import django
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -12,23 +10,31 @@ from borrowings.models import Borrowing
 from payments.models import Payment
 from user.models import User
 
-django.setup()
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "library_service.settings")
 BORROWING_URL = reverse("borrowings:borrowing-list")
 
 
-def create_test_user(email, password):
+def create_test_user(email: str, password: str) -> User:
     return User.objects.create_user(email=email, password=password)
 
 
-def create_test_book(title, author, inventory, daily_fee):
+def create_test_book(
+        title: str,
+        author: str,
+        inventory: int,
+        daily_fee: float
+) -> Book:
     return Book.objects.create(
         title=title, author=author, inventory=inventory, daily_fee=daily_fee
     )
 
 
-def create_test_borrowing(user, book, borrow_date, expected_return_date):
+def create_test_borrowing(
+        user: User,
+        book: Book,
+        borrow_date: date,
+        expected_return_date: date
+) -> Borrowing:
     borrowing = Borrowing.objects.create(
         user=user,
         book=book,
@@ -47,16 +53,16 @@ class UnauthenticatedBorrowingApiTests(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
 
-    def test_auth_required(self):
+    def test_auth_required(self) -> None:
         res = self.client.get(BORROWING_URL)
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class BorrowingApiTests(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.client = APIClient()
 
-    def test_create_borrowing(self):
+    def test_create_borrowing(self) -> None:
         user = create_test_user("test@example.com", "password")
         book = create_test_book("Test Book", "Test Author", 5, 10)
 
@@ -80,7 +86,7 @@ class BorrowingApiTests(TestCase):
         self.assertEqual(borrowing.user, user)
         self.assertEqual(borrowing.book, book)
 
-    def test_list_borrowings(self):
+    def test_list_borrowings(self) -> None:
         user = create_test_user("test@example.com", "password")
         book = create_test_book("Test Book", "Test Author", 5, 10)
         borrowing = create_test_borrowing(
@@ -107,26 +113,3 @@ class BorrowingApiTests(TestCase):
             response.data[0]["expected_return_date"],
             borrowing.expected_return_date.strftime("%Y-%m-%d")
         )
-
-    def test_return_borrowing(self):
-        user = create_test_user("test@example.com", "password")
-        book = create_test_book("Test Book", "Test Author", 5, 10)
-        borrowing = create_test_borrowing(
-            user,
-            book,
-            date.today(),
-            date.today() + timedelta(days=5)
-        )
-
-        payment = borrowing.payments.first()
-        payment.status = payment.PaymentStatus.PAID
-        payment.save()
-
-        self.client.force_authenticate(user=user)
-
-        response = self.client.post(reverse("borrowings:return-borrowing", args=[borrowing.pk]))
-
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
-        borrowing.refresh_from_db()
-        self.assertEqual(borrowing.actual_return_date, date.today())

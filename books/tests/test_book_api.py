@@ -1,19 +1,14 @@
-import os
-
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-import django
 
 from books.models import Book
 from books.serializers import BookSerializer
 
-django.setup()
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "library_service.settings")
 BOOK_URL = reverse("books:book-list")
 
 
@@ -27,7 +22,7 @@ def sample_book(**params):
         "author": "Test author",
         "cover": "Hardcover",
         "inventory": 5,
-        "daily_fee": "1.00",
+        "daily_fee": 1.00,
     }
     defaults.update(params)
 
@@ -38,7 +33,7 @@ class UnauthenticatedBookApiTests(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
 
-    def test_unauthenticated_user_can_read_books(self):
+    def test_unauthenticated_user_can_read_books(self) -> None:
         res = self.client.get(BOOK_URL)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
@@ -52,13 +47,13 @@ class AuthenticatedBookApiTests(TestCase):
         )
         self.client.force_authenticate(self.user)
 
-    def test_create_book_forbidden(self):
+    def test_create_book_forbidden(self) -> None:
         payload = {
             "title": "Test book",
             "author": "Test author",
             "cover": "Hardcover",
             "inventory": 5,
-            "daily_fee": "1.00",
+            "daily_fee": 1.00,
         }
 
         res = self.client.post(BOOK_URL, payload)
@@ -75,7 +70,7 @@ class AdminBookApiTests(TestCase):
         )
         self.client.force_authenticate(self.user)
 
-    def test_retrieve_books_list(self):
+    def test_retrieve_books_list(self) -> None:
         sample_book()
         sample_book(title="Another Test Book", author="Another Test Author")
 
@@ -84,7 +79,7 @@ class AdminBookApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 2)
 
-    def test_retrieve_single_book(self):
+    def test_retrieve_single_book(self) -> None:
         book = sample_book()
 
         url = reverse("books:book-detail", args=[book.id])
@@ -94,7 +89,7 @@ class AdminBookApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
 
-    def test_create_book(self):
+    def test_create_book(self) -> None:
         payload = {
             "title": "Test book",
             "author": "Test author",
@@ -110,7 +105,7 @@ class AdminBookApiTests(TestCase):
         for key in payload:
             self.assertEqual(payload[key], getattr(book, key))
 
-    def test_update_book_with_patch(self):
+    def test_update_book_with_patch(self) -> None:
         book = sample_book()
 
         payload = {"title": "Updated Title", "author": "Updated Author"}
@@ -120,7 +115,7 @@ class AdminBookApiTests(TestCase):
         for key in payload:
             self.assertEqual(payload[key], getattr(book, key))
 
-    def test_update_book_with_put(self):
+    def test_update_book_with_put(self) -> None:
         book = sample_book()
 
         payload = {
@@ -137,7 +132,7 @@ class AdminBookApiTests(TestCase):
         for key in payload:
             self.assertEqual(payload[key], getattr(book, key))
 
-    def test_delete_book(self):
+    def test_delete_book(self) -> None:
         book = sample_book()
 
         res = self.client.delete(detail_url(book_id=book.id))
@@ -145,7 +140,7 @@ class AdminBookApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Book.objects.filter(id=book.id).exists())
 
-    def test_filter_books_by_title(self):
+    def test_filter_books_by_title(self) -> None:
         book1 = sample_book(title="Test Book 1", author="Test Author")
         book2 = sample_book(title="Test Book 2", author="Another Test Author")
         sample_book(title="Unrelated Title", author="Unrelated Author")

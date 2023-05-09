@@ -7,7 +7,7 @@ from borrowings.models import Borrowing
 from borrowings.signals import send_telegram_message
 
 
-def check_overdue_borrowings():
+def check_overdue_borrowings() -> None:
     overdue_borrowings = Borrowing.objects.filter(
         Q(expected_return_date__lte=date.today()) &
         Q(actual_return_date__isnull=True)

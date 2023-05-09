@@ -2,34 +2,51 @@ import datetime
 
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
+from django.http import HttpRequest
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
+from books.models import Book
 from library_service import settings
 from payments.models import Payment
 from payments.stripe_utils import create_stripe_payment, create_stripe_session
+from user.models import User
 
 
 class Borrowing(models.Model):
     user = models.ForeignKey("user.User", on_delete=models.CASCADE)
     book = models.ForeignKey("books.Book", on_delete=models.CASCADE)
     borrow_date = models.DateField(
+        default=timezone.now,
         validators=[MinValueValidator(datetime.date.today())]
     )
     expected_return_date = models.DateField(
+        default=timezone.now,
         validators=[MinValueValidator(datetime.date.today())]
     )
     actual_return_date = models.DateField(
-        null=True, blank=True, validators=[MinValueValidator(datetime.date.today())]
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(datetime.date.today())]
     )
 
-    def get_total_borrowing_price(self):
+    def get_total_borrowing_price(self) -> float:
         daily_fee = self.book.daily_fee
-        borrowing_duration = (self.expected_return_date - self.borrow_date).days
+        borrowing_duration = (
+                self.expected_return_date - self.borrow_date
+        ).days
         return daily_fee * borrowing_duration
 
     @classmethod
-    def create_borrowing(cls, request, user, book, borrow_date, expected_return_date):
+    def create_borrowing(
+            cls,
+            request: HttpRequest,
+            user: User,
+            book: Book,
+            borrow_date: str,
+            expected_return_date: str
+    ):
         if book.inventory == 0:
             raise ValidationError("This book is out of stock.")
 
@@ -44,7 +61,8 @@ class Borrowing(models.Model):
 
         if total_amount_due <= 0:
             raise ValidationError(
-                "Invalid total price: Total amount due should be greater than zero"
+                "Invalid total price: "
+                "Total amount due should be greater than zero"
             )
 
         with transaction.atomic():
@@ -52,16 +70,20 @@ class Borrowing(models.Model):
             payment = create_stripe_payment(request, borrowing)
         return borrowing
 
-    def return_borrowing(self, is_payment_paid, request=None):
+    def return_borrowing(
+            self, is_payment_paid: bool, request=None) -> Payment | None:
         if self.actual_return_date:
             raise ValueError("Borrowing has already been returned.")
         elif not is_payment_paid:
             raise ValueError("Payment is not completed.")
         else:
             self.actual_return_date = datetime.date.today()
-            overdue_days = (self.actual_return_date - self.expected_return_date).days
+            overdue_days = (
+                    self.actual_return_date - self.expected_return_date
+            ).days
             if overdue_days > 0:
-                fine_amount = overdue_days * self.book.daily_fee * settings.FINE_MULTIPLIER
+                fine_amount = overdue_days * self.book.daily_fee \
+                              * settings.FINE_MULTIPLIER
                 fine_payment = Payment.objects.create(
                     borrowing=self,
                     payment_type=Payment.PaymentType.FINE,
@@ -72,8 +94,12 @@ class Borrowing(models.Model):
                     request.build_absolute_uri(reverse("payments:success"))
                     + "?session_id={CHECKOUT_SESSION_ID}"
                 )
-                cancel_url = request.build_absolute_uri(reverse("payments:cancel"))
-                session = create_stripe_session(fine_amount, success_url, cancel_url)
+                cancel_url = request.build_absolute_uri(
+                    reverse("payments:cancel")
+                )
+                session = create_stripe_session(
+                    fine_amount, success_url, cancel_url
+                )
                 fine_payment.session_url = session.url
                 fine_payment.session_id = session.id
                 fine_payment.save()

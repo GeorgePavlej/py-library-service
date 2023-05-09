@@ -9,5 +9,5 @@ app.autodiscover_tasks()
 
 
 @app.task(bind=True)
-def debug_task(self):
+def debug_task(self) -> None:
     print(f"Request: {self.request!r}")
