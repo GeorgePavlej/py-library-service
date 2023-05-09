@@ -1,7 +1,7 @@
 from typing import Any
 
 import stripe
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
@@ -26,7 +26,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         IsAdminOrOwner,
     )
 
-    def create(self, request, *args, **kwargs):
+    def create(self, request: HttpRequest, *args, **kwargs) -> Response:
         serializer = self.get_serializer(
             data=request.data, context={"request": request}
         )
@@ -59,7 +59,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         return Payment.objects.filter(borrowing__user=user)
 
 
-def stripe_success(request):
+def stripe_success(request: HttpRequest) -> HttpResponse:
     session_id = request.GET.get("session_id")
     payment = get_object_or_404(Payment, session_id=session_id)
 
@@ -72,7 +72,7 @@ def stripe_success(request):
         return HttpResponse("Payment not successful. Please try again.")
 
 
-def stripe_cancel(request):
+def stripe_cancel(request: HttpRequest) -> HttpResponse:
     return HttpResponse(
         "Payment canceled. Please try again later. "
         "Note that the payment session is only available for 24 hours."

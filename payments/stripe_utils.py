@@ -1,14 +1,16 @@
 import stripe
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.http import HttpRequest
 from django.urls import reverse
 
+from borrowings.models import Borrowing
 from payments.models import Payment
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
 
-def create_stripe_session(amount, success_url, cancel_url):
+def create_stripe_session(amount: int, success_url: str, cancel_url: str):
     if amount <= 0:
         raise ValidationError("Total amount due should be greater than zero")
     session = stripe.checkout.Session.create(
@@ -32,7 +34,7 @@ def create_stripe_session(amount, success_url, cancel_url):
     return session
 
 
-def create_stripe_payment(request, borrowing):
+def create_stripe_payment(request: HttpRequest, borrowing: Borrowing) -> Payment:
     total_price = borrowing.get_total_borrowing_price()
     success_url = (
         request.build_absolute_uri(reverse("payments:success"))
