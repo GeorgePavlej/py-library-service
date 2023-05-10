@@ -41,15 +41,10 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-## To start the Celery worker and beat processes:
-
+## Create a superuser
 ```shell
-celery -A library_service worker --loglevel=info
+python manage.py createsuperuser
 ```
-```shell
-celery -A library_service beat -l info
-```
-
 
 ## Getting access
 <hr>
