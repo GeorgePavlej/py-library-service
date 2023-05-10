@@ -7,19 +7,50 @@ This project provides a RESTful API for managing library system in your city, by
 Python3 must be already installed
 ```shell
 git clone https://github.com/GeorgePavlej/py-library-service.git
+```
+```shell
 cd py-library-service
+```
+```shell
 python -m venv venv
-venv\Scripts\activate (Windows) or source venv/bin/activate (Linux or macOS)
+```
+```shell
+venv\Scripts\activate (Windows)
+```
+```shell
+source venv/bin/activate (Linux or macOS)
+```
+```shell
 pip install -r requirements.txt
+```
+```shell
 copy .env.sample -> .env and populate with all required data
 ```
 
 ## Run migrations and server:
 
 ```shell
+python manage.py makemigrations
+```
+
+```shell
 python manage.py migrate
+```
+
+```shell
 python manage.py runserver
 ```
+
+## To start the Celery worker and beat processes:
+
+```shell
+celery -A library_service worker --loglevel=info
+```
+```shell
+celery -A library_service beat -l info
+```
+
+
 ## Getting access
 <hr>
 
