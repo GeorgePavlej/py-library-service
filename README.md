@@ -54,6 +54,7 @@ The test user credentials are:
 
 ```shell
 python manage.py loaddata fixtures/initial_data.json
+
 ```
 
 ## Getting access
