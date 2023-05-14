@@ -1,0 +1,24 @@
+[
+  {
+    "model": "books.book",
+    "pk": 1,
+    "fields": {
+      "title": "Sample Book 1",
+      "author": "John Doe",
+      "cover": "Hardcover",
+      "inventory": 10,
+      "daily_fee": "2.00"
+    }
+  },
+  {
+    "model": "books.book",
+    "pk": 2,
+    "fields": {
+      "title": "Sample Book 2",
+      "author": "Jane Doe",
+      "cover": "Softcover",
+      "inventory": 5,
+      "daily_fee": "1.50"
+    }
+  }
+]
