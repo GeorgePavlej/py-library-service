@@ -30,10 +30,6 @@ copy .env.sample -> .env and populate with all required data
 ## Run migrations and server:
 
 ```shell
-python manage.py makemigrations
-```
-
-```shell
 python manage.py migrate
 ```
 
@@ -41,9 +37,23 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-## Create a superuser
+## Test User
+- To create a test user, run the following command:
+
 ```shell
-python manage.py createsuperuser
+python manage.py create_test_user
+```
+
+The test user credentials are:
+
+    Email: testuser@example.com
+    Password: testpassword123
+
+## Loading Fixture Data
+- To load the fixture data into your database, run the following command:
+
+```shell
+python manage.py loaddata fixtures/initial_data.json
 ```
 
 ## Getting access
