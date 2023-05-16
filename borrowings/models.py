@@ -15,7 +15,7 @@ from user.models import User
 
 
 class Borrowing(models.Model):
-    user = models.ForeignKey("user.User", on_delete=models.CASCADE)
+    user = models.ForeignKey("user.User", on_delete=models.CASCADE, null=True)
     book = models.ForeignKey("books.Book", on_delete=models.CASCADE)
     borrow_date = models.DateField(
         default=timezone.now,
