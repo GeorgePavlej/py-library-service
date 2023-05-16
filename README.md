@@ -27,6 +27,10 @@ source venv/bin/activate (Linux or macOS)
 copy .env.sample -> .env and populate with all required data
 ```
 
+```shell
+pip install -r requirements.txt
+```
+
 ## Run docker to start the development server and other required services:
 
 ```shell
