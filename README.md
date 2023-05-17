@@ -60,3 +60,30 @@ The API documentation is available at:
 - Managing users borrowings of books
 - Telegram notifications for borrowing events
 - Stripe payments integration for book borrowings
+
+## Endpoints
+Books Service:
+Managing books amount (CRUD for Books)
+API:
+- POST: books/ - add new
+- GET:  books/ - get a list of books
+- GET:  books/id/- get book's detail info
+- PUT/PATCH: books/id/ - update book
+- DELETE: books/id/ - delete book
+
+## Users Service:
+Managing authentication & user registration
+API:
+- POST: users/ - register a new user
+- POST: users/token/ - get JWT tokens
+- POST: users/token/refresh/ - refresh JWT token
+- GET:  users/me/ - get my profile info
+- PUT/PATCH: users/me/ - update profile info
+
+## Borrowings Service:
+Managing users' borrowings of books
+API:
+- POST: borrowings/ - add new borrowing
+- GET:  borrowings/  - get borrowings
+- GET:  borrowings/id/ - get specific borrowing
+- POST: borrowings/id/return/ - return borrowed book
