@@ -33,12 +33,6 @@ class PaymentViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         amount = serializer.validated_data["amount"]
 
-        if amount <= 0:
-            return Response(
-                {"detail": "The total amount due cannot be zero or negative."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         success_url = request.build_absolute_uri(reverse("payments:success"))
         cancel_url = request.build_absolute_uri(reverse("payments:cancel"))
 
