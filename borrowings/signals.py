@@ -1,29 +1,15 @@
-import requests
 from django.conf import settings
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from requests import Response
 
 from borrowings.models import Borrowing
-
-
-def send_telegram_message(chat_id: int, message: str) -> Response:
-    bot_token = settings.BOT_TOKEN
-    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    payload = {"chat_id": chat_id, "text": message}
-    response = requests.post(url, data=payload)
-    return response
+from borrowings.utils import send_telegram_message
 
 
 @receiver(post_save, sender=Borrowing)
 def send_borrowing_notification(
-        instance: Borrowing, created: bool, **kwargs
-) -> None:
-    send_new_borrowing_notification(instance, created)
-
-
-def send_new_borrowing_notification(
-        instance: Borrowing, created: bool = True
+        instance: Borrowing,
+        created: bool, **kwargs
 ) -> None:
     if created:
         chat_id = settings.CHAT_ID
