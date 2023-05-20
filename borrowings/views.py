@@ -1,7 +1,8 @@
+from datetime import date
 from typing import Type
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
+from django.urls import reverse
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -11,7 +12,9 @@ from rest_framework.response import Response
 from rest_framework.serializers import Serializer
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from library_service import settings
 from payments.models import Payment
+from payments.stripe_utils import create_stripe_session
 from .models import Borrowing
 from .serializers import BorrowingReadSerializer, BorrowingCreateSerializer
 
@@ -69,56 +72,55 @@ class BorrowingViewSet(viewsets.ModelViewSet):
         return queryset
 
     @action(detail=True, methods=["post"])
-    @extend_schema(
-        request=None,
-        responses={
-            status.HTTP_204_NO_CONTENT: None,
-            status.HTTP_404_NOT_FOUND: {
-                "type": "object",
-                "properties": {
-                    "detail": {
-                        "type": "string",
-                        "description": "Not Found",
-                    },
-                },
-            },
-            status.HTTP_400_BAD_REQUEST: {
-                "type": "object",
-                "properties": {
-                    "detail": {
-                        "type": "string",
-                        "description": "Borrowing has already been returned.",
-                    },
-                },
-            },
-        },
-    )
     def return_borrowing(self, request: Request, *args, **kwargs) -> Response:
-        try:
-            borrowing = Borrowing.objects.get(pk=kwargs["pk"])
-            payment_status = borrowing.payments.first().status
-            is_payment_paid = payment_status == Payment.PaymentStatus.PAID
-            fine_payment = borrowing.return_borrowing(
-                is_payment_paid, request=request
+        borrowing = self.get_object()
+        if borrowing.actual_return_date:
+            return Response(
+                {"detail": "Borrowing has already been returned."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-            if fine_payment:
-                return Response(
-                    {
-                        "detail": "Fine payment created.",
-                        "payment_id": fine_payment.id,
-                        "payment_url": fine_payment.session_url,
-                    },
-                    status=status.HTTP_201_CREATED,
-                )
-            else:
-                return Response(status=status.HTTP_204_NO_CONTENT)
-        except ObjectDoesNotExist:
+        payment_status = borrowing.payments.first().status
+        is_payment_paid = payment_status == Payment.PaymentStatus.PAID
+        if not is_payment_paid:
+            return Response(
+                {"detail": "Payment is not completed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        borrowing.actual_return_date = date.today()
+        overdue_days = (
+                borrowing.actual_return_date - borrowing.expected_return_date
+        ).days
+        if overdue_days > 0:
+            fine_amount = overdue_days * borrowing.book.daily_fee \
+                          * settings.FINE_MULTIPLIER
+            fine_payment = Payment.objects.create(
+                borrowing=borrowing,
+                payment_type=Payment.PaymentType.FINE,
+                amount=fine_amount,
+                status=Payment.PaymentStatus.PENDING,
+            )
+            success_url = (
+                    request.build_absolute_uri(reverse("payments:success"))
+                    + "?session_id={CHECKOUT_SESSION_ID}"
+            )
+            cancel_url = request.build_absolute_uri(
+                reverse("payments:cancel")
+            )
+            session = create_stripe_session(
+                fine_amount, success_url, cancel_url
+            )
+            fine_payment.session_url = session.url
+            fine_payment.session_id = session.id
+            fine_payment.save()
+
             return Response(
                 {
-                    "detail": "Borrowing not found."
-                }, status=status.HTTP_404_NOT_FOUND
+                    "detail": "Fine payment created.",
+                    "payment_id": fine_payment.id,
+                    "payment_url": fine_payment.session_url,
+                },
+                status=status.HTTP_201_CREATED,
             )
-        except ValueError as error:
-            return Response({
-                "detail": str(error)
-            }, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            borrowing.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
