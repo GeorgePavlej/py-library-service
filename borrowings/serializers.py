@@ -1,6 +1,9 @@
+from django.db import transaction
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from payments.serializers import PaymentSerializer
+from payments.stripe_utils import create_stripe_payment
 from .models import Borrowing
 from books.models import Book
 
@@ -45,9 +48,29 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data: dict) -> Borrowing:
         user = self.context["request"].user
-        request = self.context["request"]
-        return Borrowing.create_borrowing(
+        book = validated_data["book"]
+        borrow_date = validated_data["borrow_date"]
+        expected_return_date = validated_data["expected_return_date"]
+
+        if book.inventory == 0:
+            raise ValidationError("This book is out of stock.")
+
+        borrowing = Borrowing(
             user=user,
-            request=request,
-            **validated_data
+            book=book,
+            borrow_date=borrow_date,
+            expected_return_date=expected_return_date,
         )
+
+        total_amount_due = borrowing.get_total_borrowing_price()
+
+        if total_amount_due <= 0:
+            raise ValidationError(
+                "Invalid total price: "
+                "Total amount due should be greater than zero"
+            )
+
+        with transaction.atomic():
+            borrowing.save()
+            payment = create_stripe_payment(self.context["request"], borrowing)
+        return borrowing
