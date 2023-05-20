@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from .models import Payment
 
@@ -14,3 +15,10 @@ class PaymentSerializer(serializers.ModelSerializer):
             "amount",
             "session_url",
         )
+
+    def validate_amount(self, value):
+        if value <= 0:
+            raise ValidationError(
+                "The total amount due cannot be zero or negative."
+            )
+        return value
