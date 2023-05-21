@@ -14,6 +14,10 @@ git clone https://github.com/GeorgePavlej/py-library-service.git
 ```
 
 ```shell
+cd py-library-service
+```
+
+```shell
 python -m venv venv
 ```
 ```shell
@@ -29,6 +33,14 @@ copy .env.sample -> .env and populate with all required data
 
 ```shell
 pip install -r requirements.txt
+```
+
+```shell
+python manage.py migrate
+```
+
+```shell
+python manage.py runserver
 ```
 
 ## Run docker to start the development server and other required services:
