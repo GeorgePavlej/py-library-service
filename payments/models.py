@@ -28,7 +28,7 @@ class Payment(models.Model):
     )
     updated_at = models.DateTimeField(auto_now=True)
     session_url = models.URLField(max_length=360, blank=True, null=True)
-    session_id = models.CharField(max_length=255)
+    session_id = models.TextField()
     amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self) -> str:

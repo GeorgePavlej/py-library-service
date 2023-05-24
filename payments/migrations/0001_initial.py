@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
                 ),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 ("session_url", models.URLField(blank=True, max_length=360, null=True)),
-                ("session_id", models.CharField(max_length=255)),
+                ("session_id", models.TextField()),
                 ("amount", models.DecimalField(decimal_places=2, max_digits=10)),
                 (
                     "borrowing",
