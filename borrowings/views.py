@@ -25,7 +25,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
 
     def get_serializer_class(self) -> Type[Serializer]:
-        if self.request.method == "POST":
+        if self.action == "create":
             return BorrowingCreateSerializer
         return BorrowingReadSerializer
 
