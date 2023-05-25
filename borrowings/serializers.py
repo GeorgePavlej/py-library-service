@@ -46,6 +46,11 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
             )
         return data
 
+    def validate_book(self, value: Book) -> Book:
+        if value.inventory <= 0:
+            raise serializers.ValidationError("This book is currently out of stock.")
+        return value
+
     def create(self, validated_data: dict) -> Borrowing:
         user = self.context["request"].user
         book = validated_data["book"]
@@ -53,7 +58,7 @@ class BorrowingCreateSerializer(serializers.ModelSerializer):
         expected_return_date = validated_data["expected_return_date"]
 
         if book.inventory == 0:
-            raise ValidationError("This book is out of stock.")
+            raise ValidationError("F")
 
         borrowing = Borrowing(
             user=user,
