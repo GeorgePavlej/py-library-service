@@ -47,10 +47,10 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_spectacular",
     "books",
-    "user",
-    "borrowings",
+    "borrowings.apps.BorrowingsConfig",
     "payments",
     "django_celery_beat",
+    "user",
 ]
 
 MIDDLEWARE = [
